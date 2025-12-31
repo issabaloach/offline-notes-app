@@ -1,0 +1,14 @@
+# Dependency directories
+node_modules/
+
+# Build directories (where your .exe files live)
+out/
+dist/
+build/
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Logs
+npm-debug.log*

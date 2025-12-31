@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Pro Notes</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        /* --- 1. GLOBAL VARIABLES (Theme) --- */
+        :root {
+            --sidebar-bg: #1e1e1e;       /* VS Code Dark */
+            --sidebar-text: #cccccc;
+            --sidebar-hover: #37373d;
+            --accent-color: #007acc;     /* VS Code Blue */
+            --danger-color: #ff5f56;
+            --editor-bg: #ffffff;
+            --text-color: #333333;
+            --border-color: #e1e4e8;
+        }
+
+        /* --- 2. RESET & LAYOUT --- */
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            overflow: hidden;
+        }
+
+        /* --- 3. SIDEBAR STYLING --- */
+        #sidebar {
+            width: 280px;
+            background-color: var(--sidebar-bg);
+            color: var(--sidebar-text);
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #000;
+            user-select: none; /* Prevent text selection */
+        }
+
+        #sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid #333;
+            background: #252526;
+        }
+
+        #sidebar-header h3 {
+            margin: 0 0 15px 0;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Search Box */
+        #search-box {
+            width: 100%;
+            padding: 10px;
+            background: #3c3c3c;
+            border: 1px solid transparent;
+            border-radius: 4px;
+            color: white;
+            outline: none;
+            transition: border 0.2s;
+        }
+        #search-box:focus { border-color: var(--accent-color); }
+
+        /* The List */
+        #file-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px 0;
+        }
+
+        /* List Items */
+        .file-item {
+            padding: 10px 20px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            border-left: 3px solid transparent; /* Marker for active state */
+            transition: all 0.2s;
+        }
+
+        .file-item:hover {
+            background-color: var(--sidebar-hover);
+            color: white;
+        }
+
+        .file-item.active {
+            background-color: #37373d;
+            border-left-color: var(--accent-color);
+            color: white;
+            font-weight: 500;
+        }
+
+        .delete-btn {
+            opacity: 0;
+            color: #aaa;
+            font-size: 16px;
+            transition: opacity 0.2s, color 0.2s;
+        }
+        .file-item:hover .delete-btn { opacity: 1; }
+        .delete-btn:hover { color: var(--danger-color); }
+
+        /* --- 4. MAIN AREA STYLING --- */
+        #main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--editor-bg);
+        }
+
+        /* Toolbar */
+        #toolbar {
+            padding: 15px 30px;
+            background: #f9f9f9;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        #filename-input {
+            flex: 1;
+            padding: 10px;
+            font-size: 18px;
+            font-weight: 500;
+            border: none;
+            background: transparent;
+            color: #333;
+            outline: none;
+        }
+        #filename-input:focus { border-bottom: 2px solid var(--accent-color); }
+
+        /* Buttons */
+        button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.1s, box-shadow 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        button:active { transform: scale(0.98); }
+
+        .btn-primary {
+            background-color: var(--accent-color);
+            color: white;
+            box-shadow: 0 2px 5px rgba(0, 122, 204, 0.3);
+        }
+        .btn-primary:hover { background-color: #0062a3; }
+
+        .btn-secondary {
+            background-color: white;
+            border: 1px solid #ccc;
+            color: #555;
+        }
+        .btn-secondary:hover { background-color: #f0f0f0; }
+
+        /* --- 5. EDITOR & PREVIEW --- */
+        #editor-container {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+
+        textarea {
+            width: 100%;
+            height: 100%;
+            border: none;
+            padding: 40px; /* Generous padding like a document */
+            font-size: 16px;
+            font-family: 'Consolas', 'Monaco', monospace; /* Good for Markdown */
+            line-height: 1.6;
+            color: #333;
+            outline: none;
+            resize: none;
+            background: #fff;
+        }
+
+        /* Markdown Preview Styling (GitHub Style) */
+        #preview-area {
+            width: 100%;
+            height: 100%;
+            padding: 40px;
+            overflow-y: auto;
+            display: none;
+            line-height: 1.7;
+            color: #24292e;
+        }
+        #preview-area h1 { border-bottom: 1px solid #eaecef; padding-bottom: 0.3em; margin-bottom: 16px; }
+        #preview-area h2 { border-bottom: 1px solid #eaecef; padding-bottom: 0.3em; }
+        #preview-area blockquote { color: #6a737d; border-left: 0.25em solid #dfe2e5; padding: 0 1em; }
+        #preview-area code {
+            padding: 0.2em 0.4em;
+            margin: 0;
+            font-size: 85%;
+            background-color: #f6f8fa;
+            border-radius: 6px;
+            font-family: monospace;
+        }
+
+        /* --- 6. SCROLLBARS (Webkit) --- */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #888; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #555; }
+        #sidebar ::-webkit-scrollbar-thumb { background: #444; }
+    </style>
+</head>
+<body>
+
+    <div id="sidebar">
+        <div id="sidebar-header">
+            <h3>📂 Notes App</h3>
+            <button class="btn-primary" id="btn-new" style="width: 100%; justify-content: center;">
+                <span>+</span> New Note
+            </button>
+            <div style="margin-top: 15px;">
+                <input type="text" id="search-box" placeholder="Search notes...">
+            </div>
+        </div>
+        <div id="file-list">
+            </div>
+    </div>
+
+    <div id="main">
+        <div id="toolbar">
+            <input type="text" id="filename-input" placeholder="Untitled Note">
+            <div style="flex: 1;"></div> <button class="btn-secondary" id="btn-toggle">
+                👁 Preview
+            </button>
+            <button class="btn-primary" id="btn-save">
+                💾 Save
+            </button>
+        </div>
+
+        <div id="editor-container">
+            <textarea id="file-content" placeholder="# Start writing your masterpiece..."></textarea>
+            <div id="preview-area"></div>
+        </div>
+    </div>
+
+    <script src="renderer.js"></script>
+</body>
+</html>
